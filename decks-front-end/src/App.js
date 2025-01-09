@@ -10,6 +10,4 @@ function App() {
   );
 }
 
-function 
-
 export default App;
