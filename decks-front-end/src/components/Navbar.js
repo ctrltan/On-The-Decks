@@ -1,5 +1,6 @@
 import Nav from 'react'
 import LoginButton from './auth/Login';
+import LogoutButton from './auth/Logout';
 
 export default function Navbar() {
     return (
@@ -8,6 +9,9 @@ export default function Navbar() {
                 <ul>
                     <li>
                         <LoginButton />
+                    </li>
+                    <li>
+                        <LogoutButton />
                     </li>
                     <li>
                         <a href='/'>Home</a>
