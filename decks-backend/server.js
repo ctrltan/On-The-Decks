@@ -6,13 +6,14 @@ const app = express()
 const cookieParser = require('cookie-parser')
 const cors = require('cors')
 const { access } = require('fs')
+const { default: Verify } = require('./auth/verify')
 
 app.use(cors({
     origin: 'http://localhost:3000',
 }))
 app.use(cookieParser())
 
-const REDIRECT_URI = 'http://localhost:8080/callback'
+const REDIRECT_URI = 'http://localhost:3000/callback'
 const PORT = 8080
 
 app.get('/', (req, res) => {
@@ -32,10 +33,18 @@ app.get('/login', (req, res) => {
     }
 });
 
-app.get('/callback', async (req, res) => {
+app.get('/logout', (req, res) => {
+    res.clearCookie('access_token');
+    res.clearCookie('refresh_token');
+
+    console.log("clear");
+    res.redirect('http://localhost:3000/');
+});
+
+app.post('/callback', async (req, res) => {
     try {
-        const state = req.query.state || null
-        const auth_code = req.query.code || null
+        const state = req.body.state || null
+        const auth_code = req.body.code || null
 
         if (state === null || auth_code === null) {
             throw 500;
@@ -71,11 +80,33 @@ app.get('/callback', async (req, res) => {
         });
 
         const message = encodeURIComponent('It worked!');
-        res.redirect(`http://localhost:3000?status=success&message=${message}`);
+        res.send({ status: 'success' });
     } catch(error) {
         console.error("Callback Failed", error);
-        const message = encodeURIComponent('Sorry! We could not log you in at this moment');
-        res.redirect(`http://localhost:3000?status=failure&message=${message}`);
+        res.status(500).send({ status: 'failure', message: 'Sorry! We could not log you in at this moment' });
+    }
+});
+
+app.get('/verify', async (req, res) => {
+    const access_cookie = req.cookies['access_token'];
+    const refresh_cookie = req.cookies['refresh_token'];
+    
+    if (access_cookie) {
+        res.send({ authenticated: true });
+    } else if (refresh_cookie) {
+        const params = new URLSearchParams();
+        params.append('grant_type', 'refresh_token');
+        params.append('refresh_token', refresh_cookie);
+        params.append('client_id', process.env.CLIENT_ID);
+
+        const response = await axios.post('https://accounts.spotify.com/api/token', params, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+        });
+        res.send({ authenticated: true });
+    } else {
+        res.send({ authenticated: false });
     }
 });
 
