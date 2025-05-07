@@ -8,10 +8,13 @@ const cors = require('cors')
 const { access } = require('fs')
 const { default: Verify } = require('./auth/verify')
 
+app.use(cookieParser())
 app.use(cors({
     origin: 'http://localhost:3000',
+    credentials: true
 }))
-app.use(cookieParser())
+
+app.use(express.json());
 
 const REDIRECT_URI = 'http://localhost:3000/callback'
 const PORT = 8080
@@ -37,7 +40,6 @@ app.get('/logout', (req, res) => {
     res.clearCookie('access_token');
     res.clearCookie('refresh_token');
 
-    console.log("clear");
     res.redirect('http://localhost:3000/');
 });
 
@@ -46,7 +48,7 @@ app.post('/callback', async (req, res) => {
         const state = req.body.state || null
         const auth_code = req.body.code || null
 
-        if (state === null || auth_code === null) {
+        if (!state || !auth_code) {
             throw 500;
         }
 
@@ -57,25 +59,25 @@ app.post('/callback', async (req, res) => {
 
         const response = await axios.post('https://accounts.spotify.com/api/token', params, {
             headers: {
-                'Content_Type': 'application/x-www-form-urlencoded',
-                'Authorization': 'Basic ' + Buffer.from(process.env.CLIENT_ID + ':' + process.env.CLIENT_SECRET).toString('base64'),
-                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Authorization': 'Basic ' + Buffer.from(process.env.CLIENT_ID + ':' + process.env.CLIENT_SECRET).toString('base64')
             },
         });
 
         const { access_token, refresh_token } = response.data;
 
+
         res.cookie('access_token', access_token, {
             'httpOnly': true,
             'secure': false,
-            'sameSite': 'strict',
+            'sameSite': 'lax',
             'maxAge': 3600000,
         });
 
         res.cookie('refresh_token', refresh_token, {
             'httpOnly': true,
             'secure': false,
-            'sameSite': 'strict',
+            'sameSite': 'lax',
             'maxAge': 2629476000,
         });
 
