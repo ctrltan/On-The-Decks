@@ -89,6 +89,21 @@ app.post('/callback', async (req, res) => {
     }
 });
 
+app.get('/top-artists', async (req, res) => {
+    try {
+        const response = await axios.get('https://api.spotify.com/v1/me/top/artists?time_range=long_term&limit=5&offset=0', {
+            headers: {
+                'Authorization': `Bearer ${req.cookies['access_token']}`,
+            },
+        });
+
+        res.send(response.data);
+    } catch(error) {
+        console.error("Get Request Failed", error);
+        res.status(500).send({ status: 'failure', message: 'Sorry! Could not retrieve data' });
+    }
+});
+
 app.get('/verify', async (req, res) => {
     const access_cookie = req.cookies['access_token'];
     const refresh_cookie = req.cookies['refresh_token'];
