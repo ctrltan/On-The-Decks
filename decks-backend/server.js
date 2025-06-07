@@ -89,15 +89,24 @@ app.post('/callback', async (req, res) => {
     }
 });
 
-app.get('/top-artists', async (req, res) => {
+app.get('/top-tracks', async (req, res) => {
     try {
-        const response = await axios.get('https://api.spotify.com/v1/me/top/artists?time_range=long_term&limit=5&offset=0', {
-            headers: {
-                'Authorization': `Bearer ${req.cookies['access_token']}`,
-            },
-        });
+        var songs = [];
+        const limit = 40;
+        let offset = 0;
+        
+        while (songs.length < 200) {
+            const response = await axios.get(`https://api.spotify.com/v1/me/top/tracks?time_range=long_term&limit=${limit}&offset=${offset}`, {
+                headers: {
+                    'Authorization': `Bearer ${req.cookies['access_token']}`,
+                },
+            });
 
-        res.send(response.data);
+            offset += 50;
+            songs = songs.concat(response.data.items);
+        };
+
+        res.send(songs);
     } catch(error) {
         console.error("Get Request Failed", error);
         res.status(500).send({ status: 'failure', message: 'Sorry! Could not retrieve data' });

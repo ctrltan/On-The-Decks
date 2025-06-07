@@ -21,8 +21,9 @@ export default function HomePage() {
 
 const getData = async () => {
     try {
-        const response = await axios.get('http://localhost:8080/top-artists', { withCredentials: true });
+        const response = await axios.get('http://localhost:8080/top-tracks', { withCredentials: true });
         console.log(response.data);
+
     } catch (error) {
         console.log(error);
     }
